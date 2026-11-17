@@ -270,8 +270,6 @@ const configSchema = z.object({
   // Key for US-only teams; OPENAI_API_KEY is never used for them.
   OPENAI_US_API_KEY: emptyStringAsUndefined(z.string().trim().min(1)),
   OPENROUTER_API_KEY: z.string().optional(),
-  LLAMAPARSE_API_KEY: z.string().optional(),
-  STRIPE_SECRET_KEY: z.string().optional(),
   AUTUMN_SECRET_KEY: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
   PREVIEW_TOKEN: z.string().optional(),
@@ -453,6 +451,15 @@ const configSchema = z.object({
   // tool lookup, and add tools to default searches (also the alexandriaAutoTools
   // team flag).
   ANTHROPIC_API_KEY: emptyStringAsUndefined(z.string().trim().min(1)),
+  // Workload identity federation, used when ANTHROPIC_API_KEY is unset: the
+  // pod's Google identity is exchanged for short-lived Anthropic tokens.
+  ANTHROPIC_FEDERATION_RULE_ID: emptyStringAsUndefined(
+    z.string().trim().min(1),
+  ),
+  ANTHROPIC_ORGANIZATION_ID: emptyStringAsUndefined(z.string().trim().min(1)),
+  ANTHROPIC_SERVICE_ACCOUNT_ID: emptyStringAsUndefined(
+    z.string().trim().min(1),
+  ),
   ALEXANDRIA_AUTO_TOOLS: z.stringbool().default(false),
   // Rank rewrite-found tools together with raw-query tools by reciprocal rank
   // fusion (also the alexandriaToolFusion team flag), waiting up to
@@ -469,6 +476,12 @@ const configSchema = z.object({
   // Exchange (routed data sources service)
   FIRE_EXCHANGE_URL: z.url().optional(),
   EXCHANGE_INTERNAL_SECRET: emptyStringAsUndefined(z.string().trim().min(1)),
+  EXCHANGE_CREDIT_GRANTS_ENABLED: z.stringbool().default(false),
+  EXCHANGE_CREDIT_GRANT_MAX_CREDITS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(10000),
 
   // Fire Engine
   FIRE_ENGINE_BETA_URL: z.string().optional(),
@@ -720,7 +733,6 @@ const configSchema = z.object({
 
   // AI/ML
   MODEL_NAME: z.string().optional(),
-  MODEL_EMBEDDING_NAME: z.string().optional(),
   OLLAMA_BASE_URL: z.string().optional(),
   VERTEX_CREDENTIALS: z.string().optional(),
   // Uses Vertex with ambient credentials when VERTEX_CREDENTIALS is unset.
@@ -731,10 +743,6 @@ const configSchema = z.object({
   LANGSMITH_PROJECT: z.string().optional(),
   LANGSMITH_ENDPOINT: z.string().optional(),
   LANGSMITH_TRACING: z.stringbool().optional(),
-
-  // Rate Limiting
-  RATE_LIMIT_TEST_API_KEY_SCRAPE: z.coerce.number().optional(),
-  RATE_LIMIT_TEST_API_KEY_CRAWL: z.coerce.number().optional(),
 
   // Testing
   TEST_API_KEY: z.string().optional(),
@@ -766,7 +774,6 @@ const configSchema = z.object({
   NUQ_POD_NAME: z.string().default("main"),
 
   // Billing
-  AUTO_RECHARGE_ENABLED: z.stringbool().default(false),
   // firebill — durable usage-event store that sits in front of Autumn. Every
   // billing write (check, lock, track, refund, finalize) goes through it;
   // without both URL and SECRET set, billing is skipped.
